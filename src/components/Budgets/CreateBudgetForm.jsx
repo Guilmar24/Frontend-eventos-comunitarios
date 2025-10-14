@@ -1,20 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import InputField from '../UI/InputField.jsx';
 import SelectField from '../UI/SelectField.jsx';
 import TextareaField from '../UI/TextareaField.jsx';
 import FormSection from '../UI/FormSection.jsx';
+import { alertErrorsList, alertSuccess, alertError } from '../../utils/alerts.js';
+import { getEvents } from '../../api/events.js';
+import { createBudgetRequest } from '../../api/budgets.js';
 
-/**
- * CreateBudgetForm
- * Campos según especificación:
- * - originId: Integer (por defecto = 1; no se muestra en UI)
- * - requestAmount: BigDecimal (> 0, requerido)
- * - name: String (requerido)
- * - reason: String (requerido)
- * - requestDate: LocalDate (opcional; lo genera el servicio → no se pide en UI)
- * - email: String (requerido, formato válido)
- * - priorityId: Integer (1..3, requerido)
- */
 export default function CreateBudgetForm() {
   const [form, setForm] = useState({
     name: '',
@@ -24,20 +17,58 @@ export default function CreateBudgetForm() {
     reason: ''
   });
 
-  const ORIGIN_DEFAULT = 1;
+  const [events, setEvents] = useState([]);
+  const [selectedEventId, setSelectedEventId] = useState('');
+
+  const ORIGIN_DEFAULT = 0;
+
+  const location = useLocation();
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const data = await getEvents();
+        if (!mounted) return;
+        setEvents(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error('Error al cargar eventos para presupuesto:', err);
+        alertError('Error al cargar eventos', err.message || 'Error desconocido');
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
+
+  useEffect(() => {
+    const st = location?.state;
+    if (st && st.eventNombre) {
+      setForm(prev => ({ ...prev, name: st.eventNombre }));
+    }
+    if (st && st.eventId) {
+      setSelectedEventId(st.eventId);
+    }
+  }, [location?.state]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleEventSelect = (e) => {
+    const eventId = e.target.value;
+    setSelectedEventId(eventId);
+    const ev = events.find((x) => String(x.id) === String(eventId));
+    if (ev && ev.nombre) {
+      setForm((prev) => ({ ...prev, name: ev.nombre }));
+    }
+  };
+
   const validateEmail = (email) => {
-    // Suficiente para validación básica en front; el backend hará validación definitiva
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return re.test(String(email).toLowerCase());
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const errors = [];
 
@@ -59,12 +90,10 @@ export default function CreateBudgetForm() {
     else if (priority < 1 || priority > 3) errors.push('Prioridad: debe ser 1, 2 o 3.');
 
     if (errors.length > 0) {
-      // eslint-disable-next-line no-alert
-      alert(errors.join('\n'));
+      await alertErrorsList('Revisa los campos', errors);
       return;
     }
 
-    // Armado de payload (sin requestDate; el servicio lo autogenera)
     const payload = {
       originId: ORIGIN_DEFAULT,
       requestAmount: amount,
@@ -74,20 +103,21 @@ export default function CreateBudgetForm() {
       priorityId: priority
     };
 
-    // Placeholder de envío
-    // eslint-disable-next-line no-console
-    console.log('Nuevo Presupuesto (payload):', payload);
-    // eslint-disable-next-line no-alert
-    alert('Presupuesto guardado (demo). Ver consola para payload.');
-
-    // Reset básico del formulario
-    setForm({
-      name: '',
-      email: '',
-      requestAmount: '',
-      priorityId: '',
-      reason: ''
-    });
+    try {
+      await createBudgetRequest(payload);
+      await alertSuccess('Presupuesto guardado', 'La solicitud de presupuesto fue enviada correctamente.');
+      setForm({
+        name: '',
+        email: '',
+        requestAmount: '',
+        priorityId: '',
+        reason: ''
+      });
+      setSelectedEventId('');
+    } catch (err) {
+      console.error('Error al crear solicitud de presupuesto:', err);
+      await alertError('Error al crear presupuesto', err.message || 'Error desconocido');
+    }
   };
 
   const handleCancel = () => {
@@ -114,13 +144,27 @@ export default function CreateBudgetForm() {
           />
 
           <div className="form-row form-row-gap">
+            <SelectField
+              label="Evento"
+              name="selectedEventId"
+              required
+              value={selectedEventId}
+              onChange={handleEventSelect}
+              placeholder="Seleccione un evento para autocompletar el Nombre"
+              options={events.map(ev => ({ value: ev.id, label: ev.nombre }))}
+              groupClass="form-group col-md-6"
+              helpText="Al elegir un evento se completa automáticamente el campo Nombre con el nombre del evento."
+            />
+          </div>
+
+          <div className="form-row form-row-gap">
             <InputField
               label="Nombre"
               name="name"
               required
               value={form.name}
               onChange={handleChange}
-              placeholder="Nombre del solicitante"
+              placeholder="Nombre del evento o solicitante"
               groupClass="form-group col-md-6"
             />
             <InputField

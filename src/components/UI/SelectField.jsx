@@ -30,7 +30,7 @@ export default function SelectField({
     id: name,
     name,
     required,
-    className: 'custom-select'
+    className: 'custom-select custom-select-sm'
   };
 
   if (value !== undefined) selectProps.value = value;

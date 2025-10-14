@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import InputField from '../UI/InputField.jsx';
 import SelectField from '../UI/SelectField.jsx';
 import TextareaField from '../UI/TextareaField.jsx';
 import FormSection from '../UI/FormSection.jsx';
+import { alertErrorsList, alertSuccess, alertError } from '../../utils/alerts.js';
+import { getEvents } from '../../api/events.js';
+import { createRegistration } from '../../api/registrations.js';
 
 /**
  * CreateRegistrationForm (Inscripciones)
@@ -22,19 +25,34 @@ export default function CreateRegistrationForm() {
     notasAdicionales: ''
   });
 
-  // Dummy options por ahora
-  const eventOptions = [
-    { value: '1', label: 'Evento Demo A' },
-    { value: '2', label: 'Conferencia Municipal' },
-    { value: '3', label: 'Taller Comunitario' }
-  ];
+  const [eventOptions, setEventOptions] = useState([]);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const data = await getEvents();
+        if (!mounted) return;
+        const opts = (Array.isArray(data) ? data : []).map((ev) => ({
+          value: ev.id,
+          label: ev.nombre
+        }));
+        setEventOptions(opts);
+      } catch (err) {
+        
+        console.error('Error al cargar eventos para inscripciones:', err);
+        alertError('Error al cargar eventos', err.message || 'Error desconocido');
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const errors = [];
 
@@ -55,8 +73,7 @@ export default function CreateRegistrationForm() {
     if (notas.length > 500) errors.push('Notas adicionales: máximo 500 caracteres.');
 
     if (errors.length) {
-      // eslint-disable-next-line no-alert
-      alert(errors.join('\n'));
+      await alertErrorsList('Revisa los campos', errors);
       return;
     }
 
@@ -67,10 +84,22 @@ export default function CreateRegistrationForm() {
       participanteTelefono: tel,
       notasAdicionales: notas
     };
-    // eslint-disable-next-line no-console
-    console.log('Nueva Inscripción (payload):', payload);
-    // eslint-disable-next-line no-alert
-    alert('Inscripción guardada (demo). Ver consola para payload.');
+
+    try {
+      await createRegistration(payload);
+      await alertSuccess('Inscripción guardada', 'La inscripción se registró correctamente.');
+      setForm({
+        eventId: '',
+        participanteNombre: '',
+        participanteEmail: '',
+        participanteTelefono: '',
+        notasAdicionales: ''
+      });
+    } catch (err) {
+      
+      console.error('Error al crear inscripción:', err);
+      await alertError('Error al crear inscripción', err.message || 'Error desconocido');
+    }
   };
 
   const handleCancel = () => {
@@ -104,7 +133,7 @@ export default function CreateRegistrationForm() {
               value={form.eventId}
               onChange={handleChange}
               groupClass="form-group col-md-6"
-              helpText="Lista temporal de eventos (dummy)."
+              helpText="Opciones cargadas desde el backend."
             />
           </div>
 

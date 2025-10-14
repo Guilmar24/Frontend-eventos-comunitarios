@@ -48,7 +48,7 @@ export default function InputField({
     minLength,
     maxLength,
     pattern,
-    className: 'form-control'
+    className: 'form-control form-control-sm'
   };
 
   if (value !== undefined) inputProps.value = value;

@@ -1,4 +1,3 @@
-import React from 'react';
 import '../../style/MainContent.css';
 import { Routes, Route } from 'react-router-dom';
 import Dashboard from '../Dashboard/Dashboard.jsx';

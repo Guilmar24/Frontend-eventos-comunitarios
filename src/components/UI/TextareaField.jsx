@@ -47,7 +47,7 @@ export default function TextareaField({
   const textareaProps = {
     id: name,
     name,
-    className: 'form-control',
+    className: 'form-control form-control-sm',
     placeholder,
     required,
     rows,

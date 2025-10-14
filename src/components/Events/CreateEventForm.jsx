@@ -1,20 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import InputField from '../UI/InputField.jsx';
 import TextareaField from '../UI/TextareaField.jsx';
 import FormSection from '../UI/FormSection.jsx';
+import { createEvent } from '../../api/events.js';
+import { alertErrorsList, alertSuccess, alertError } from '../../utils/alerts.js';
 
-/**
- * CreateEventForm
- * Campos solicitados:
- * - nombre (required, 3-200)
- * - descripcion (optional, max 1000)
- * - fechaInicio (required, futuro) - datetime-local
- * - fechaFin (required) - datetime-local (>= fechaInicio)
- * - ubicacion (required, max 300)
- * - capacidadMaxima (required, int, 1..10000)
- * - organizador (required, max 200)
- * - presupuestoSolicitado (required, number >= 0)
- */
 
 function toLocalInputValue(d) {
   const pad = (n) => String(n).padStart(2, '0');
@@ -40,7 +30,7 @@ export default function CreateEventForm() {
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const errors = [];
@@ -101,26 +91,39 @@ export default function CreateEventForm() {
     }
 
     if (errors.length > 0) {
-      // eslint-disable-next-line no-alert
-      alert(errors.join('\\n'));
+      await alertErrorsList('Revisa los campos', errors);
       return;
     }
 
-    // Envío (placeholder demo)
+ 
     const payload = {
       nombre,
       descripcion,
-      fechaInicio: form.fechaInicio,
-      fechaFin: form.fechaFin,
+      fechaInicio: new Date(form.fechaInicio).toISOString(),
+      fechaFin: new Date(form.fechaFin).toISOString(),
       ubicacion,
       capacidadMaxima: cap,
       organizador: org,
       presupuestoSolicitado: presupuesto
     };
-    // eslint-disable-next-line no-console
-    console.log('Nuevo Evento (payload):', payload);
-    // eslint-disable-next-line no-alert
-    alert('Evento guardado (demo). Ver consola para payload.');
+    try {
+      await createEvent(payload);
+      await alertSuccess('Evento creado', 'El evento fue creado correctamente.');
+      setForm({
+        nombre: '',
+        descripcion: '',
+        fechaInicio: '',
+        fechaFin: '',
+        ubicacion: '',
+        capacidadMaxima: '',
+        organizador: '',
+        presupuestoSolicitado: ''
+      });
+    } catch (err) {
+      
+      console.error('Error al crear evento:', err);
+      await alertError('Error al crear evento', err.message || 'Error desconocido');
+    }
   };
 
   const handleCancel = () => {
