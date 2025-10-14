@@ -1,0 +1,8 @@
+/* Minimal spacing inside AdminLTE content area */
+.content {
+  padding: 1rem;
+}
+
+.card .card-body p {
+  margin-bottom: 0;
+}
