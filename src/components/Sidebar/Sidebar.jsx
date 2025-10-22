@@ -1,11 +1,24 @@
+import { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import '../../style/Sidebar.css';
 
 function Sidebar() {
   const location = useLocation();
-  const isEventsSectionActive = location.pathname.startsWith('/events');
-  const isRegistrationsSectionActive = location.pathname.startsWith('/registrations');
-  const isBudgetsSectionActive = location.pathname.startsWith('/budgets');
+  const isEventsActive = location.pathname.startsWith('/events');
+  const isRegistrationsActive = location.pathname.startsWith('/registrations');
+  const isBudgetsActive = location.pathname.startsWith('/budgets');
+
+  // Local open/close state independent of AdminLTE JS
+  const [eventsOpen, setEventsOpen] = useState(isEventsActive);
+  const [registrationsOpen, setRegistrationsOpen] = useState(isRegistrationsActive);
+  const [budgetsOpen, setBudgetsOpen] = useState(isBudgetsActive);
+
+  // Keep sections open if the current route is inside them
+  useEffect(() => {
+    setEventsOpen(isEventsActive);
+    setRegistrationsOpen(isRegistrationsActive);
+    setBudgetsOpen(isBudgetsActive);
+  }, [isEventsActive, isRegistrationsActive, isBudgetsActive]);
 
   return (
     <aside className="main-sidebar sidebar-dark-primary elevation-4">
@@ -37,16 +50,30 @@ function Sidebar() {
             <li className="nav-header">Operaciones</li>
 
             {/* Registrar Evento (listar/crear) */}
-            <li className={`nav-item has-treeview ${isEventsSectionActive ? 'menu-open' : ''}`}>
-              {/* Parent toggler (kept as plain link for AdminLTE arrow UI) */}
-              <a href="#" className={`nav-link ${isEventsSectionActive ? 'active' : ''}`}>
+            <li className={`nav-item has-treeview ${(eventsOpen || isEventsActive) ? 'menu-open' : ''}`}>
+              {/* Parent toggler */}
+              <a
+                href="#"
+                className={`nav-link ${(eventsOpen || isEventsActive) ? 'active' : ''}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setEventsOpen(prev => !prev);
+                }}
+                role="button"
+                aria-expanded={(eventsOpen || isEventsActive) ? 'true' : 'false'}
+                aria-controls="treeview-events"
+              >
                 <i className="nav-icon fas fa-calendar-plus"></i>
                 <p>
                   Registrar Evento
                   <i className="right fas fa-angle-left"></i>
                 </p>
               </a>
-              <ul className="nav nav-treeview">
+              <ul
+                id="treeview-events"
+                className="nav nav-treeview"
+                style={{ display: (eventsOpen || isEventsActive) ? 'block' : 'none' }}
+              >
                 <li className="nav-item">
                   <NavLink
                     to="/events"
@@ -71,15 +98,29 @@ function Sidebar() {
             </li>
 
             {/* Inscripciones (listar/crear) */}
-            <li className={`nav-item has-treeview ${isRegistrationsSectionActive ? 'menu-open' : ''}`}>
-              <a href="#" className={`nav-link ${isRegistrationsSectionActive ? 'active' : ''}`}>
+            <li className={`nav-item has-treeview ${(registrationsOpen || isRegistrationsActive) ? 'menu-open' : ''}`}>
+              <a
+                href="#"
+                className={`nav-link ${(registrationsOpen || isRegistrationsActive) ? 'active' : ''}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setRegistrationsOpen(prev => !prev);
+                }}
+                role="button"
+                aria-expanded={(registrationsOpen || isRegistrationsActive) ? 'true' : 'false'}
+                aria-controls="treeview-registrations"
+              >
                 <i className="nav-icon fas fa-user-check"></i>
                 <p>
                   Inscripciones
                   <i className="right fas fa-angle-left"></i>
                 </p>
               </a>
-              <ul className="nav nav-treeview">
+              <ul
+                id="treeview-registrations"
+                className="nav nav-treeview"
+                style={{ display: (registrationsOpen || isRegistrationsActive) ? 'block' : 'none' }}
+              >
                 <li className="nav-item">
                   <NavLink
                     to="/registrations"
@@ -104,15 +145,29 @@ function Sidebar() {
             </li>
 
             {/* Presupuestos (listar/crear) */}
-            <li className={`nav-item has-treeview ${isBudgetsSectionActive ? 'menu-open' : ''}`}>
-              <a href="#" className={`nav-link ${isBudgetsSectionActive ? 'active' : ''}`}>
+            <li className={`nav-item has-treeview ${(budgetsOpen || isBudgetsActive) ? 'menu-open' : ''}`}>
+              <a
+                href="#"
+                className={`nav-link ${(budgetsOpen || isBudgetsActive) ? 'active' : ''}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setBudgetsOpen(prev => !prev);
+                }}
+                role="button"
+                aria-expanded={(budgetsOpen || isBudgetsActive) ? 'true' : 'false'}
+                aria-controls="treeview-budgets"
+              >
                 <i className="nav-icon fas fa-coins"></i>
                 <p>
                   Presupuestos
                   <i className="right fas fa-angle-left"></i>
                 </p>
               </a>
-              <ul className="nav nav-treeview">
+              <ul
+                id="treeview-budgets"
+                className="nav nav-treeview"
+                style={{ display: (budgetsOpen || isBudgetsActive) ? 'block' : 'none' }}
+              >
                 <li className="nav-item">
                   <NavLink
                     to="/budgets"

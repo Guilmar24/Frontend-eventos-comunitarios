@@ -6,7 +6,17 @@ function Navbar() {
       {/* Left navbar links */}
       <ul className="navbar-nav">
         <li className="nav-item">
-          <a className="nav-link" data-widget="pushmenu" href="#" role="button" aria-label="Toggle sidebar">
+          <a
+            className="nav-link"
+            href="#"
+            role="button"
+            aria-label="Toggle sidebar"
+            onClick={(e) => {
+              e.preventDefault();
+              // React-controlled pushmenu: toggle AdminLTE's sidebar collapse class
+              document.body.classList.toggle('sidebar-collapse');
+            }}
+          >
             <i className="fas fa-bars"></i>
           </a>
         </li>
