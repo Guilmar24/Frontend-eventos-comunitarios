@@ -5,11 +5,14 @@ import './style/index.css'
 import './style/theme.css'
 import './style/forms.css'
 import App from './App.jsx'
+import { AuthProvider } from './context/AuthContext.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <BrowserRouter basename={import.meta.env.BASE_URL}>
-      <App />
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
+        <App />
+      </BrowserRouter>
+    </AuthProvider>
   </StrictMode>,
 )

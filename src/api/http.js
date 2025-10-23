@@ -1,4 +1,9 @@
 import { joinUrl } from './config.js';
+import { getToken, clearAuth } from '../utils/authStorage.js';
+const BASE_PATH = (import.meta && import.meta.env && typeof import.meta.env.BASE_URL === 'string')
+  ? import.meta.env.BASE_URL
+  : '/';
+const LOGIN_URL = (BASE_PATH.endsWith('/') ? BASE_PATH : BASE_PATH + '/') + 'login';
 
 
 
@@ -12,8 +17,15 @@ async function parseJsonSafe(res) {
 }
 
 function buildHeaders(extra) {
+  const token = getToken();
+  const base = {
+    'Content-Type': 'application/json'
+  };
+  if (token) {
+    base.Authorization = `Bearer ${token}`;
+  }
   return {
-    'Content-Type': 'application/json',
+    ...base,
     ...(extra || {})
   };
 }
@@ -27,6 +39,18 @@ export async function httpPost(path, body, headers) {
   });
 
   const data = await parseJsonSafe(res);
+  if (res.status === 401) {
+    try { clearAuth(); } catch {}
+    try {
+      if (typeof window !== 'undefined' && window.location && window.location.pathname !== LOGIN_URL) {
+        window.location.assign(LOGIN_URL);
+      }
+    } catch {}
+    const err = new Error('No autorizado');
+    err.status = 401;
+    err.data = data;
+    throw err;
+  }
   if (!res.ok) {
     const msg = (data && (data.message || data.error || data.errors)) || res.statusText;
     const err = new Error(typeof msg === 'string' ? msg : 'Request failed');
@@ -45,6 +69,18 @@ export async function httpGet(path, headers) {
   });
 
   const data = await parseJsonSafe(res);
+  if (res.status === 401) {
+    try { clearAuth(); } catch {}
+    try {
+      if (typeof window !== 'undefined' && window.location && window.location.pathname !== LOGIN_URL) {
+        window.location.assign(LOGIN_URL);
+      }
+    } catch {}
+    const err = new Error('No autorizado');
+    err.status = 401;
+    err.data = data;
+    throw err;
+  }
   if (!res.ok) {
     const msg = (data && (data.message || data.error || data.errors)) || res.statusText;
     const err = new Error(typeof msg === 'string' ? msg : 'Request failed');

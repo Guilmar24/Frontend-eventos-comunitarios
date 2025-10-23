@@ -10,6 +10,7 @@ import { createBudgetRequest } from '../../api/budgets.js';
 
 export default function CreateBudgetForm() {
   const [form, setForm] = useState({
+    originId: 1,
     name: '',
     email: '',
     requestAmount: '',
@@ -95,7 +96,7 @@ export default function CreateBudgetForm() {
     }
 
     const payload = {
-      originId: ORIGIN_DEFAULT,
+      originId: 1,
       requestAmount: amount,
       name,
       reason,
